@@ -12,11 +12,12 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ComicDocument, ComicModel } from './comic.model';
+import { ComicDocument } from './comic.model';
 import { ComicDto } from './dto/Comic.dto';
 import { ComicService } from './comic.service';
 import { COMIC_NOT_FOUND_ERROR } from './comic.constants';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { UpdateComicDto } from './dto/updateComic.dto';
 
 @Controller('comic')
 export class ComicController {
@@ -40,9 +41,9 @@ export class ComicController {
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async getByType(@Query() { type }: { type: string }) {
     const comics = await this.comicService.findByType(type);
-    console.log(comics);
     if (!comics) {
       throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
     }
@@ -50,6 +51,7 @@ export class ComicController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async delete(@Param('id') id: string) {
     const deletedComic = await this.comicService.delete(id);
     if (!deletedComic) {
@@ -61,5 +63,12 @@ export class ComicController {
   }
 
   @Patch(':id')
-  async patch(@Param('id') id: number, @Body() dto: ComicModel) {}
+  @UseGuards(JwtAuthGuard)
+  async patch(@Param('id') id: string, @Body() dto: UpdateComicDto) {
+    const comic = await this.comicService.update(id, dto);
+    if (!comic) {
+      throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
+    }
+    return comic;
+  }
 }

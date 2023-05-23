@@ -1,52 +1,41 @@
-import { ArrayMinSize, IsIn, IsNotEmpty, IsString } from 'class-validator';
-import { titleStatus, typeArray } from '../comic.constants';
+import { ArrayMinSize, IsIn, IsString, Length, length } from 'class-validator';
+import { TypeArray } from '../comic.constants';
 
 export class ComicDto {
-  @IsNotEmpty()
   @IsString()
   imgCover: string;
 
   @IsString()
-  @IsNotEmpty()
   title: string;
 
   @IsString()
-  @IsNotEmpty()
   alternativeTitle: string;
 
   @IsString()
-  @IsNotEmpty()
   description: string;
 
   @IsString()
-  @IsNotEmpty()
-  @IsIn(typeArray)
+  @IsIn(TypeArray)
   type: string;
 
   @ArrayMinSize(1, { message: 'At least one string is required' })
   @IsString({ each: true, message: 'All elements must be strings' })
-  @IsNotEmpty()
   genres: string[];
-
   @IsString()
-  @IsIn(titleStatus)
-  @IsNotEmpty()
   status: string;
 
   @IsString()
-  @IsIn(titleStatus)
-  @IsNotEmpty()
   translateStatus: string;
 
   @IsString()
-  @IsNotEmpty()
+  @Length(1)
   author: string;
 
   @IsString()
-  @IsNotEmpty()
+  @Length(1)
   artist: string;
 
   @IsString()
-  @IsNotEmpty()
+  @Length(1)
   publishingCompany: string;
 }

@@ -1,8 +1,16 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument, Types } from 'mongoose';
+export type ChapterDocument = HydratedDocument<ChapterModel>;
+@Schema({ timestamps: true, id: true })
 export class ChapterModel {
-  id: number;
-  comicId: number;
-  chapters: {
-    chapterNumber: number;
-    chapterSource: string;
-  }[];
+  @Prop()
+  comicId: Types.ObjectId;
+
+  @Prop()
+  chapterNumber: number;
+
+  @Prop()
+  pages: string[];
 }
+
+export const ChapterSchema = SchemaFactory.createForClass(ChapterModel);
