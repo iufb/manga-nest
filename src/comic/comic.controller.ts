@@ -52,6 +52,15 @@ export class ComicController {
     return comics;
   }
 
+  @Get('search/:searchText')
+  async getByText(@Param('searchText') searchText: string) {
+    const comics = await this.comicService.findByText(searchText);
+    if (!comics) {
+      throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
+    }
+    return comics;
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   async delete(@Param('id', IdValidationPipe) id: string) {

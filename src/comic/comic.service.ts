@@ -56,6 +56,11 @@ export class ComicService {
   async findByType(type: string): Promise<ComicDocument[] | null> {
     return this.comicModel.aggregate(aggregationProps('type', type)).exec();
   }
+  async findByText(text: string): Promise<ComicDocument[] | null> {
+    return this.comicModel.find({
+      $text: { $search: text, $caseSensitive: false },
+    });
+  }
   async update(id: string, comicData: UpdateComicDto) {
     const comic = await this.comicModel.findOneAndUpdate(
       { _id: id },
@@ -64,6 +69,7 @@ export class ComicService {
     );
     return comic;
   }
+
   async delete(id: string): Promise<ComicDocument | null> {
     return this.comicModel.findByIdAndDelete(id).exec();
   }

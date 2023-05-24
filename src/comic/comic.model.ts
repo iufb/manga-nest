@@ -38,3 +38,8 @@ export class ComicModel {
 }
 
 export const ComicSchema = SchemaFactory.createForClass(ComicModel);
+ComicSchema.index({
+  title: 'text',
+  alternativeTitle: 'text',
+  description: 'text',
+});
