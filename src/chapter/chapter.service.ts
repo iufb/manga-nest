@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { ChapterDocument, ChapterModel } from './chapter.model';
 import { ChapterDto } from './dto/chapter.dto';
 import { CHAPTER_ALREADY_EXISTS_ERROR } from './chapter.constants';
+import { UpdateChapterDto } from './dto/update-chapter.dto';
 
 @Injectable()
 export class ChapterService {
@@ -12,7 +13,7 @@ export class ChapterService {
   ) {}
   async create(dto: ChapterDto) {
     const chapter = await this.chapterModel.find({
-      comicId: dto.comicId,
+      comicId: new Types.ObjectId(dto.comicId),
       chapterNumber: dto.chapterNumber,
     });
     if (chapter.length > 0) {
@@ -23,7 +24,28 @@ export class ChapterService {
       comicId: new Types.ObjectId(dto.comicId),
     });
   }
-  async delete(id: string): Promise<ChapterDocument | null> {
+  async update(id: string, dto: UpdateChapterDto) {
+    const chapter = await this.chapterModel.findByIdAndUpdate(
+      { _id: id },
+      dto,
+      { new: true },
+    );
+    return chapter;
+  }
+  async deleteById(id: string): Promise<ChapterDocument | null> {
     return this.chapterModel.findByIdAndDelete(id).exec();
+  }
+  async deleteByComicId(comicId: string) {
+    return this.chapterModel
+      .deleteMany({ comicId: new Types.ObjectId(comicId) })
+      .exec();
+  }
+  async findById(id: string) {
+    return this.chapterModel.findById(id).exec();
+  }
+  async findByComicId(comicId: string) {
+    return this.chapterModel.find({
+      comicId: new Types.ObjectId(comicId),
+    });
   }
 }

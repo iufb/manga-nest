@@ -6,6 +6,38 @@ import { ComicDto } from './dto/Comic.dto';
 import { COMIC_ALREADY_EXISTS_ERROR } from './comic.constants';
 import { UpdateComicDto } from './dto/updateComic.dto';
 
+const aggregationProps = (
+  findBy: string,
+  value: string,
+  isObjectId?: boolean,
+) => {
+  return [
+    {
+      $match: {
+        [findBy]: isObjectId ? new Types.ObjectId(value) : value,
+      },
+    },
+    {
+      $lookup: {
+        from: 'chapters',
+        localField: '_id',
+        foreignField: 'comicId',
+        as: 'chapters',
+      },
+    },
+    {
+      $addFields: {
+        chaptersCount: { $size: '$chapters' },
+      },
+    },
+    {
+      $project: {
+        chapters: 0,
+      },
+    },
+  ];
+};
+
 @Injectable()
 export class ComicService {
   constructor(@InjectModel('comic') private comicModel: Model<ComicModel>) {}
@@ -19,31 +51,10 @@ export class ComicService {
     return this.comicModel.create(dto);
   }
   async findById(id: string) {
-    return this.comicModel
-      .aggregate([
-        {
-          $match: {
-            _id: new Types.ObjectId(id),
-          },
-        },
-        {
-          $lookup: {
-            from: 'chapters',
-            localField: '_id',
-            foreignField: 'comicId',
-            as: 'chapters',
-          },
-        },
-        {
-          $addFields: {
-            chaptersCount: { $size: '$chapters' },
-          },
-        },
-      ])
-      .exec();
+    return this.comicModel.aggregate(aggregationProps('_id', id, true)).exec();
   }
   async findByType(type: string): Promise<ComicDocument[] | null> {
-    return this.comicModel.find({ type }).exec();
+    return this.comicModel.aggregate(aggregationProps('type', type)).exec();
   }
   async update(id: string, comicData: UpdateComicDto) {
     const comic = await this.comicModel.findOneAndUpdate(

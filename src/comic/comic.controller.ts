@@ -59,9 +59,6 @@ export class ComicController {
     if (!deletedComic) {
       throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
     }
-    return {
-      message: `Comic ${deletedComic.title} deleted.`,
-    };
   }
 
   @Patch(':id')
