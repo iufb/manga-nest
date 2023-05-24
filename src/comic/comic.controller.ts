@@ -18,6 +18,8 @@ import { ComicService } from './comic.service';
 import { COMIC_NOT_FOUND_ERROR } from './comic.constants';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { UpdateComicDto } from './dto/updateComic.dto';
+import { IdValidationPipe } from 'src/pipes/id-validation.pipe';
+import { TypeValidationPipe } from 'src/pipes/type-validation.pipe';
 
 @Controller('comic')
 export class ComicController {
@@ -32,7 +34,7 @@ export class ComicController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async get(@Param('id') id: string) {
+  async get(@Param('id', IdValidationPipe) id: string) {
     const comic = await this.comicService.findById(id);
     if (!comic) {
       throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
@@ -42,7 +44,7 @@ export class ComicController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async getByType(@Query() { type }: { type: string }) {
+  async getByType(@Query(TypeValidationPipe) { type }: { type: string }) {
     const comics = await this.comicService.findByType(type);
     if (!comics) {
       throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
@@ -52,7 +54,7 @@ export class ComicController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  async delete(@Param('id') id: string) {
+  async delete(@Param('id', IdValidationPipe) id: string) {
     const deletedComic = await this.comicService.delete(id);
     if (!deletedComic) {
       throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
@@ -64,7 +66,10 @@ export class ComicController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
-  async patch(@Param('id') id: string, @Body() dto: UpdateComicDto) {
+  async patch(
+    @Param('id', IdValidationPipe) id: string,
+    @Body() dto: UpdateComicDto,
+  ) {
     const comic = await this.comicService.update(id, dto);
     if (!comic) {
       throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
