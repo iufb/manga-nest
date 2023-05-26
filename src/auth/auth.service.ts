@@ -6,36 +6,36 @@ import { AuthDto } from './dto/auth.dto';
 import { compare, genSalt, hash } from 'bcryptjs';
 import { USER_NOT_FOUND_ERROR, WRONG_PASSWORD_ERROR } from './auth.constants';
 import { JwtService } from '@nestjs/jwt';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel('user') private authModel: Model<UserModel>,
+    @InjectModel('user') private userModel: Model<UserModel>,
     private readonly jwtService: JwtService,
+    private readonly userService: UserService,
   ) {}
 
-  async create(createUser: AuthDto): Promise<UserModel> {
+  async create(dto: AuthDto): Promise<UserModel> {
     const salt = await genSalt(10);
-    const newUser = new this.authModel({
-      email: createUser.login,
-      passwordHash: await hash(createUser.password, salt),
+    const newUser = new this.userModel({
+      email: dto.login,
+      passwordHash: await hash(dto.password, salt),
     });
     return newUser.save();
   }
 
-  async findUser(email: string): Promise<UserModel> {
-    const user = await this.authModel.findOne({ email }).exec();
-    return user;
-  }
   async validateUser(
     email: string,
     password: string,
   ): Promise<Pick<UserModel, 'email'>> {
-    const user = await this.findUser(email);
+    const user = await this.userService.findUser(email);
+    console.log(email, password, user);
     if (!user) {
       throw new UnauthorizedException(USER_NOT_FOUND_ERROR);
     }
     const isValidPassword = await compare(password, user.passwordHash);
+    console.log(isValidPassword);
     if (!isValidPassword) {
       throw new UnauthorizedException(WRONG_PASSWORD_ERROR);
     }
