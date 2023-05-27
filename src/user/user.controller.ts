@@ -13,8 +13,6 @@ import { UserService } from './user.service';
 import { UserEmail } from 'src/decorators/user-email.decorator';
 import { UserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { IsArray, IsString } from 'class-validator';
-import { ReadingComicsDto } from './dto/add-reading-comics.dto';
 
 @Controller('user')
 export class UserController {
@@ -39,15 +37,5 @@ export class UserController {
   @Patch()
   async patch(@UserEmail() email: string, @Body() dto: UpdateUserDto) {
     return this.userService.update(email, dto);
-  }
-
-  @UsePipes(new ValidationPipe())
-  @UseGuards(JwtAuthGuard)
-  @Patch('readingComics')
-  async addReadingList(
-    @UserEmail() email: string,
-    @Body() dto: ReadingComicsDto,
-  ) {
-    return this.userService.addToReadingList(dto.readingComics, email);
   }
 }

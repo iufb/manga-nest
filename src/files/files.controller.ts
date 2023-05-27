@@ -3,33 +3,36 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { FileElementResponse } from './dto/file-element.response';
 import { FilesService } from './files.service';
-import { MFile } from './mfile.class';
+import { UserEmail } from 'src/decorators/user-email.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
+import { FileElementResponse } from './dto/file-element.response';
 
 @Controller('files')
 export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
-  @Post('upload')
+  @UseGuards(JwtAuthGuard)
+  @Post('upload/avatar')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @UserEmail() email: string,
+  ): Promise<FileElementResponse> {
+    const name = email.split('@')[0];
+    return this.filesService.saveAvatars(file, name);
+  }
+  @UseGuards(JwtAuthGuard)
+  @Post('upload/chapter')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadChapter(
     @UploadedFile() file: Express.Multer.File,
     @Query() { comicName }: { comicName: string },
   ): Promise<FileElementResponse[]> {
-    const saveArray: MFile[] = [];
-    if (file.mimetype.includes('image')) {
-      const buffer = await this.filesService.convertToWebP(file.buffer);
-      saveArray.push(
-        new MFile({
-          originalname: `${file.originalname.split('.')[0]}.webp`,
-          buffer,
-        }),
-      );
-    }
-    return this.filesService.saveFiles(saveArray, comicName);
+    return this.filesService.unzipAndSave(file, comicName);
   }
 }

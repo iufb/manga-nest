@@ -1,9 +1,11 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsIn, IsOptional, IsString } from 'class-validator';
+import { roleArray } from '../user.constants';
 
 export class UserDto {
   @IsString()
   name: string;
 
+  @IsIn(roleArray)
   @IsString()
   role: string;
 
