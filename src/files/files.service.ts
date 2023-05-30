@@ -7,7 +7,7 @@ import * as AdmZip from 'adm-zip';
 @Injectable()
 export class FilesService {
   async saveAvatars(file: Express.Multer.File, name: string) {
-    const avatarFolder = `${path}/uploads/avatars/${name}`;
+    const avatarFolder = `/opt/app/uploads/avatars/${name}`;
     const filePath = `${avatarFolder}/${file.originalname}`;
     const webpPath = `${avatarFolder}/${file.originalname.split('.')[0]}.webp`;
     await ensureDir(avatarFolder);
@@ -20,7 +20,7 @@ export class FilesService {
     return sharp(buffer).toFormat('webp').toFile(outPutPath);
   }
   async saveZip(file: Express.Multer.File, name: string) {
-    const zipPath = `${path}/uploads/comics/${name}`;
+    const zipPath = `/opt/app/uploads/comics/${name}`;
     await ensureDir(zipPath);
     await writeFile(`${zipPath}/${file.originalname}`, file.buffer);
     return { file: `${zipPath}/${file.originalname}`, folderPath: zipPath };

@@ -1,4 +1,4 @@
-version: '3'
+version: '23'
 services:
   manga.nest:
     image: docker.pkg.github.com/iufb/manga-nest/manga-nest:develop
