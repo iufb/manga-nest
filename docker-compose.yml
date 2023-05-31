@@ -8,3 +8,4 @@ services:
       - 3000:3000
     volumes:
       - ./.env:/opt/app/.env
+      - ./uploads:/opt/app/uploads
