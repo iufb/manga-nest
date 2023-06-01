@@ -14,7 +14,7 @@ export class FilesService {
     await writeFile(filePath, file.buffer);
     await this.convertToWebP(filePath, webpPath);
     await remove(filePath);
-    return { url: `${avatarFolder}/${file.originalname.split('.')[0]}.webp` };
+    return { url: `avatars/${file.originalname.split('.')[0]}.webp` };
   }
   async convertToWebP(buffer: Buffer | string, outPutPath: string) {
     return sharp(buffer).toFormat('webp').toFile(outPutPath);
