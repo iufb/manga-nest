@@ -1,4 +1,4 @@
-import { Injectable, Patch } from '@nestjs/common';
+import { Injectable, Param, Patch } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserModel } from './user.model';
@@ -15,14 +15,13 @@ export class UserService {
     });
     return user.save();
   }
-  async findUser(
-    email: string,
-  ): Promise<UserModel | Omit<UserModel, 'passwordHash'>> {
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) {
+  async findUser(email: string) {
+    const user = await this.userModel.find({ email }).exec();
+    // Check if user credentials doesn't added returns only email.
+    if (user.length == 0) {
       return { email };
     }
-    return user;
+    return user[0];
   }
   async update(email: string, dto: UpdateUserDto) {
     await this.userModel.findOneAndUpdate(
