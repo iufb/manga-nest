@@ -15,8 +15,13 @@ export class UserService {
     });
     return user.save();
   }
-  async findUser(email: string): Promise<UserModel> {
+  async findUser(
+    email: string,
+  ): Promise<UserModel | Omit<UserModel, 'passwordHash'>> {
     const user = await this.userModel.findOne({ email }).exec();
+    if (!user) {
+      return { email };
+    }
     return user;
   }
   async update(email: string, dto: UpdateUserDto) {
