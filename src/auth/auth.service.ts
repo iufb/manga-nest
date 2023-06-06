@@ -6,11 +6,13 @@ import { compare, genSalt, hash } from 'bcryptjs';
 import { USER_NOT_FOUND_ERROR, WRONG_PASSWORD_ERROR } from './auth.constants';
 import { JwtService } from '@nestjs/jwt';
 import { AuthModel } from './auth.model';
+import { UserModel } from 'src/user/user.model';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel('auth') private authModel: Model<AuthModel>,
+    @InjectModel('user') private userModel: Model<UserModel>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -20,6 +22,7 @@ export class AuthService {
       email: dto.login,
       passwordHash: await hash(dto.password, salt),
     });
+    await this.userModel.create({ email: dto.login, role: 'default' });
     return newUser.save();
   }
   async findUser(email: string): Promise<AuthModel> {

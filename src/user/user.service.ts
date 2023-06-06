@@ -2,19 +2,11 @@ import { Injectable, Param, Patch } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserModel } from './user.model';
-import { UserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
   constructor(@InjectModel('user') private userModel: Model<UserModel>) {}
-  async create(dto: UserDto, email: string) {
-    const user = new this.userModel({
-      email,
-      ...dto,
-    });
-    return user.save();
-  }
   async findUser(email: string) {
     const user = await this.userModel.find({ email }).exec();
     // Check if user credentials doesn't added returns only email.

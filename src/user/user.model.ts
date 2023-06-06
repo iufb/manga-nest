@@ -7,9 +7,6 @@ export class UserModel {
   email: string;
 
   @Prop()
-  passwordHash: string;
-
-  @Prop()
   name?: string;
 
   @Prop()
