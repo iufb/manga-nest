@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ensureDir, writeFile, remove } from 'fs-extra';
+import { ensureDir, writeFile, remove, readdir, unlink } from 'fs-extra';
 import * as sharp from 'sharp';
 import * as AdmZip from 'adm-zip';
 import { path } from 'app-root-path';
@@ -8,14 +8,17 @@ import { path } from 'app-root-path';
 export class FilesService {
   async saveAvatars(file: Express.Multer.File, name: string) {
     const avatarFolder = `${path}/uploads/avatars/${name}`;
-    const fileName = 'avatar';
+    const fileName = file.originalname ? file.originalname : 'avatar';
     const filePath = `${avatarFolder}/${fileName}`;
     const webpPath = `${avatarFolder}/${fileName.split('.')[0]}.webp`;
     await ensureDir(avatarFolder);
+    for (const file of await readdir(avatarFolder)) {
+      await unlink(`/${avatarFolder}/${file}`);
+    }
     await writeFile(filePath, file.buffer);
     await this.convertToWebP(filePath, webpPath);
     await remove(filePath);
-    return { url: `avatars/${name}/${fileName}.webp` };
+    return { url: `avatars/${name}/${fileName.split('.')[0]}.webp` };
   }
   async convertToWebP(buffer: Buffer | string, outPutPath: string) {
     return sharp(buffer).toFormat('webp').toFile(outPutPath);
