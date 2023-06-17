@@ -7,18 +7,26 @@ import { path } from 'app-root-path';
 @Injectable()
 export class FilesService {
   async saveAvatars(file: Express.Multer.File, name: string) {
-    const avatarFolder = `${path}/uploads/avatars/${name}`;
-    const fileName = file.originalname ? file.originalname : 'avatar';
-    const filePath = `${avatarFolder}/${fileName}`;
-    const webpPath = `${avatarFolder}/${fileName.split('.')[0]}.webp`;
-    await ensureDir(avatarFolder);
-    for (const file of await readdir(avatarFolder)) {
-      await unlink(`/${avatarFolder}/${file}`);
+    const avatarFolder = `${path}/uploads/avatars/${name}`; // path to image folder
+    const fileName = file.originalname ? file.originalname : 'avatar'; // name of image
+    await this.saveImage(avatarFolder, fileName, file.buffer);
+    return { url: `avatars/${name}/${fileName.split('.')[0]}.webp` }; // returns url to webp image
+  }
+  async saveComicCover(file: Express.Multer.File, comicName: string) {
+    const comicFolder = `${path}/uploads/comics/${comicName}/cover`;
+    await this.saveImage(comicFolder, comicName, file.buffer);
+    return { url: `${comicFolder}/${comicName.split('.')[0]}.webp` };
+  }
+  async saveImage(path: string, fileName: string, buffer: Buffer) {
+    const filePath = `${path}/${fileName}`;
+    const webpPath = `${path}/${fileName.split('.')[0]}.webp`; // path to webp image
+    await ensureDir(path); // check if folder already exists => create if not
+    for (const file of await readdir(path)) {
+      await unlink(`/${path}/${file}`); // delete previous saved image
     }
-    await writeFile(filePath, file.buffer);
-    await this.convertToWebP(filePath, webpPath);
-    await remove(filePath);
-    return { url: `avatars/${name}/${fileName.split('.')[0]}.webp` };
+    await writeFile(filePath, buffer); // save image
+    await this.convertToWebP(filePath, webpPath); // convert to webp
+    await remove(filePath); // delete original image
   }
   async convertToWebP(buffer: Buffer | string, outPutPath: string) {
     return sharp(buffer).toFormat('webp').toFile(outPutPath);

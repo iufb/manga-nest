@@ -26,6 +26,17 @@ export class FilesController {
     const name = email.split('@')[0];
     return this.filesService.saveAvatars(file, name);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('upload/comicCover')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadComicCover(
+    @UploadedFile() file: Express.Multer.File,
+    @Query() { comicName }: { comicName: string },
+  ) {
+    return this.filesService.saveComicCover(file, comicName);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post('upload/chapter')
   @UseInterceptors(FileInterceptor('file'))
