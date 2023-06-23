@@ -4,7 +4,11 @@ import { titleStatus, typeArray } from '../comic.constants';
 export class ComicDto {
   @IsNotEmpty()
   @IsString()
-  imgCover: string;
+  comicCover: string;
+
+  @IsNotEmpty()
+  @IsString()
+  comicBg: string;
 
   @IsString()
   @IsNotEmpty()

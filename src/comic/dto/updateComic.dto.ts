@@ -9,7 +9,11 @@ export class UpdateComicDto {
 
   @IsOptional()
   @IsString()
-  imgCover?: string;
+  comicCover?: string;
+
+  @IsOptional()
+  @IsString()
+  comicBg?: string;
 
   @IsString()
   @IsOptional()

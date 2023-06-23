@@ -3,10 +3,11 @@ import {
   Post,
   Query,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { FilesService } from './files.service';
 import { UserEmail } from 'src/decorators/user-email.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
@@ -28,13 +29,13 @@ export class FilesController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('upload/comicCover')
-  @UseInterceptors(FileInterceptor('file'))
+  @Post('upload/comic')
+  @UseInterceptors(FilesInterceptor('file'))
   async uploadComicCover(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Express.Multer.File[],
     @Query() { comicName }: { comicName: string },
   ) {
-    return this.filesService.saveComicCover(file, comicName);
+    return this.filesService.saveComic(files, comicName);
   }
 
   @UseGuards(JwtAuthGuard)

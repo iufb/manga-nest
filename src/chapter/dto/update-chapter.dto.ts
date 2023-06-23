@@ -11,6 +11,10 @@ export class UpdateChapterDto {
   chapterNumber?: number;
 
   @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
   @IsArray()
   @ArrayNotEmpty()
   @IsString({ each: true })

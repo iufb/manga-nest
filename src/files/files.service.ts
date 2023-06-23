@@ -12,10 +12,16 @@ export class FilesService {
     await this.saveImage(avatarFolder, fileName, file.buffer);
     return { url: `avatars/${name}/${fileName.split('.')[0]}.webp` }; // returns url to webp image
   }
-  async saveComicCover(file: Express.Multer.File, comicName: string) {
-    const comicFolder = `${path}/uploads/comics/${comicName}/cover`;
-    await this.saveImage(comicFolder, comicName, file.buffer);
-    return { url: `${comicFolder}/${comicName.split('.')[0]}.webp` };
+  async saveComic(files: Express.Multer.File[], comicName: string) {
+    const comicFolder = `${path}/uploads/comics/${comicName}`;
+    const comicCover = `${comicFolder}/cover`;
+    const comicBg = `${comicFolder}/bg`;
+    await this.saveImage(comicCover, comicName, files[0].buffer);
+    await this.saveImage(comicBg, comicName, files[1].buffer);
+    return {
+      comicCover: `comics/${comicName}/cover/${comicName.split('.')[0]}.webp`,
+      comicBg: `comics/${comicName}/bg/${comicName.split('.')[0]}.webp`,
+    };
   }
   async saveImage(path: string, fileName: string, buffer: Buffer) {
     const filePath = `${path}/${fileName}`;
@@ -32,7 +38,7 @@ export class FilesService {
     return sharp(buffer).toFormat('webp').toFile(outPutPath);
   }
   async saveZip(file: Express.Multer.File, name: string) {
-    const zipPath = `/opt/app/uploads/comics/${name}`;
+    const zipPath = `${path}/uploads/comics/${name}`;
     await ensureDir(zipPath);
     await writeFile(`${zipPath}/${file.originalname}`, file.buffer);
     return { file: `${zipPath}/${file.originalname}`, folderPath: zipPath };
@@ -47,7 +53,7 @@ export class FilesService {
         if (!zipEntries[i].isDirectory) {
           const entryPath = `${zipPath.folderPath}/${zipEntries[i].entryName}`;
           const outputWebPPath = `${zipPath.folderPath}/${i + 1}.webp`;
-          res.push(outputWebPPath);
+          res.push(`comics/${name}/${i + 1}.webp`);
           const buffer = zipEntries[i].getData();
           await ensureDir(zipPath.folderPath);
           await writeFile(entryPath, buffer);

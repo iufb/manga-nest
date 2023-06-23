@@ -39,7 +39,7 @@ export class ComicController {
     if (!comic) {
       throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
     }
-    return comic;
+    return comic[0];
   }
 
   @Get()

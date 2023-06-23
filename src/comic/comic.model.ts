@@ -4,7 +4,10 @@ export type ComicDocument = HydratedDocument<ComicModel>;
 @Schema({ timestamps: true, id: true })
 export class ComicModel {
   @Prop()
-  imgCover: string;
+  comicCover: string;
+
+  @Prop()
+  comicBg: string;
 
   @Prop()
   title: string;

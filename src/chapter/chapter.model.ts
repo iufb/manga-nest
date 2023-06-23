@@ -10,6 +10,9 @@ export class ChapterModel {
   chapterNumber: number;
 
   @Prop()
+  name: string;
+
+  @Prop()
   pages: string[];
 }
 
