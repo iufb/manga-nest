@@ -60,7 +60,7 @@ export class ChapterController {
   async getById(@Param('id', IdValidationPipe) id: string) {
     const chapter = await this.chapterService.findById(id);
     if (!chapter) throw new NotFoundException(CHAPTER_NOT_FOUND_ERROR);
-    return chapter;
+    return chapter[0];
   }
 
   @UseGuards(JwtAuthGuard)

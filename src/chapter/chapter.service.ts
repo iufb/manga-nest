@@ -5,6 +5,8 @@ import { ChapterDocument, ChapterModel } from './chapter.model';
 import { ChapterDto } from './dto/chapter.dto';
 import { CHAPTER_ALREADY_EXISTS_ERROR } from './chapter.constants';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
+import { path } from 'app-root-path';
+import { move, rename } from 'fs-extra';
 
 @Injectable()
 export class ChapterService {
@@ -16,11 +18,21 @@ export class ChapterService {
       comicId: new Types.ObjectId(dto.comicId),
       chapterNumber: dto.chapterNumber,
     });
+
     if (chapter.length > 0) {
       throw new ForbiddenException(CHAPTER_ALREADY_EXISTS_ERROR);
     }
+    const pagesFolderPath = `${path}/uploads/comics/${dto.comicId}`;
+    await rename(
+      `${pagesFolderPath}/chapters`,
+      `${pagesFolderPath}/${dto.chapterNumber}`,
+    );
+    const pages = dto.pages.map((page) =>
+      page.replace('chapters', `${dto.chapterNumber}`),
+    );
     return this.chapterModel.create({
       ...dto,
+      pages,
       comicId: new Types.ObjectId(dto.comicId),
     });
   }
@@ -41,7 +53,28 @@ export class ChapterService {
       .exec();
   }
   async findById(id: string) {
-    return this.chapterModel.findById(id).exec();
+    return this.chapterModel
+      .aggregate([
+        {
+          $match: {
+            _id: new Types.ObjectId(id),
+          },
+        },
+        {
+          $lookup: {
+            from: 'comics',
+            localField: 'comicId',
+            foreignField: '_id',
+            as: 'comicName',
+          },
+        },
+        {
+          $addFields: {
+            comicName: '$comicName.title',
+          },
+        },
+      ])
+      .exec();
   }
   async findByComicId(comicId: string) {
     return this.chapterModel.find({

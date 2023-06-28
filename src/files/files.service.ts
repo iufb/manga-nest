@@ -38,7 +38,7 @@ export class FilesService {
     return sharp(buffer).toFormat('webp').toFile(outPutPath);
   }
   async saveZip(file: Express.Multer.File, name: string) {
-    const zipPath = `${path}/uploads/comics/${name}`;
+    const zipPath = `${path}/uploads/comics/${name}/chapters`;
     await ensureDir(zipPath);
     await writeFile(`${zipPath}/${file.originalname}`, file.buffer);
     return { file: `${zipPath}/${file.originalname}`, folderPath: zipPath };
@@ -53,7 +53,7 @@ export class FilesService {
         if (!zipEntries[i].isDirectory) {
           const entryPath = `${zipPath.folderPath}/${zipEntries[i].entryName}`;
           const outputWebPPath = `${zipPath.folderPath}/${i + 1}.webp`;
-          res.push(`comics/${name}/${i + 1}.webp`);
+          res.push(`comics/${name}/chapters/${i + 1}.webp`);
           const buffer = zipEntries[i].getData();
           await ensureDir(zipPath.folderPath);
           await writeFile(entryPath, buffer);
@@ -61,7 +61,7 @@ export class FilesService {
           await remove(entryPath);
         }
       }
-
+      await remove(zipPath.file);
       console.log('Extraction and conversion completed successfully.');
     } catch (error) {
       console.error('Error extracting and converting files:', error);
