@@ -11,7 +11,6 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ChapterModel } from './chapter.model';
 import { ChapterService } from './chapter.service';
 import { ChapterDto } from './dto/chapter.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
@@ -30,39 +29,37 @@ export class ChapterController {
     return this.chapterService.create(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  async delete(@Param('id', IdValidationPipe) id: string) {
-    const deletedChapter = await this.chapterService.deleteById(id);
-    if (!deletedChapter) {
-      throw new NotFoundException(CHAPTER_NOT_FOUND_ERROR);
-    }
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Delete('byComic/:id')
-  async deleteByComicId(@Param('id', IdValidationPipe) comicId: string) {
-    return this.chapterService.deleteByComicId(comicId);
-  }
-
-  @UseGuards(JwtAuthGuard)
+  //Get
   @Get('byComic/:comicId')
   async getByComicId(@Param('comicId', IdValidationPipe) comicId: string) {
-    const chapters = await this.chapterService.findByComicId(comicId);
-    if (chapters.length == 0) {
+    return this.chapterService.findByComicId(comicId);
+  }
+  @Get('reader/:comicId')
+  async getReaderHeaderInfo(
+    @Param('comicId', IdValidationPipe) comicId: string,
+  ) {
+    return this.chapterService.getReaderHeaderInfo(comicId);
+  }
+
+  @Get('latest')
+  async getLatestUploadChapters() {
+    const latestChapters = await this.chapterService.findLatest();
+    if (latestChapters.length == 0) {
       throw new NotFoundException(CHAPTER_NOT_FOUND_ERROR);
     }
-    return chapters;
+    return latestChapters;
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  async getById(@Param('id', IdValidationPipe) id: string) {
-    const chapter = await this.chapterService.findById(id);
-    if (!chapter) throw new NotFoundException(CHAPTER_NOT_FOUND_ERROR);
-    return chapter[0];
+  @Get(':comicId/:chapterNumber')
+  async getChapterPage(
+    @Param('comicId', IdValidationPipe) comicId: string,
+    @Param('chapterNumber')
+    chapterNumber: number,
+  ) {
+    return this.chapterService.getChapterPage(comicId, chapterNumber);
   }
 
+  //Modify
   @UseGuards(JwtAuthGuard)
   @UsePipes(new ValidationPipe())
   @Patch(':id')
@@ -75,5 +72,18 @@ export class ChapterController {
       throw new NotFoundException(CHAPTER_NOT_FOUND_ERROR);
     }
     return chapter;
+  }
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  async delete(@Param('id', IdValidationPipe) id: string) {
+    const deletedChapter = await this.chapterService.deleteById(id);
+    if (!deletedChapter) {
+      throw new NotFoundException(CHAPTER_NOT_FOUND_ERROR);
+    }
+  }
+  @UseGuards(JwtAuthGuard)
+  @Delete('byComic/:id')
+  async deleteByComicId(@Param('id', IdValidationPipe) comicId: string) {
+    return this.chapterService.deleteByComicId(comicId);
   }
 }

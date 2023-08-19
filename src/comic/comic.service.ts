@@ -5,6 +5,7 @@ import { ComicDocument, ComicModel } from './comic.model';
 import { ComicDto } from './dto/Comic.dto';
 import { COMIC_ALREADY_EXISTS_ERROR } from './comic.constants';
 import { UpdateComicDto } from './dto/updateComic.dto';
+import { filterComic } from 'types';
 
 const aggregationProps = (
   findBy: string,
@@ -60,6 +61,27 @@ export class ComicService {
     return this.comicModel.find({
       $text: { $search: text, $caseSensitive: false },
     });
+  }
+  async getAll() {
+    return this.comicModel.find({});
+  }
+  async getFiltered(data: filterComic) {
+    const query: Record<string, unknown> = {};
+    console.log(data);
+    if (data.genres.length > 0) {
+      query.genres = { $in: data.genres };
+    }
+    if (data.status && data.status.length > 0) {
+      query.status = { $in: data.status };
+    }
+    if (data.type && data.type.length > 0) {
+      query.type = { $in: data.type };
+    }
+    if (data.translateStatus && data.translateStatus.length > 1) {
+      query.translateStatus = { $in: data.translateStatus };
+    }
+
+    return this.comicModel.find(query);
   }
   async update(id: string, comicData: UpdateComicDto) {
     const comic = await this.comicModel.findOneAndUpdate(

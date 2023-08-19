@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 export type ComicDocument = HydratedDocument<ComicModel>;
+
 @Schema({ timestamps: true, id: true })
 export class ComicModel {
   @Prop()
@@ -43,6 +44,4 @@ export class ComicModel {
 export const ComicSchema = SchemaFactory.createForClass(ComicModel);
 ComicSchema.index({
   title: 'text',
-  alternativeTitle: 'text',
-  description: 'text',
 });

@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ChapterDocument, ChapterModel } from './chapter.model';
@@ -6,13 +10,17 @@ import { ChapterDto } from './dto/chapter.dto';
 import { CHAPTER_ALREADY_EXISTS_ERROR } from './chapter.constants';
 import { UpdateChapterDto } from './dto/update-chapter.dto';
 import { path } from 'app-root-path';
-import { move, rename } from 'fs-extra';
-
+import { rename } from 'fs-extra';
+import { CHAPTER_NOT_FOUND_ERROR } from './chapter.constants';
+import { ComicModel } from 'src/comic/comic.model';
+import { chapterType } from 'types';
 @Injectable()
 export class ChapterService {
   constructor(
     @InjectModel('chapter') private chapterModel: Model<ChapterModel>,
+    @InjectModel('comic') private comicModel: Model<ComicModel>,
   ) {}
+  //Create
   async create(dto: ChapterDto) {
     const chapter = await this.chapterModel.find({
       comicId: new Types.ObjectId(dto.comicId),
@@ -36,6 +44,95 @@ export class ChapterService {
       comicId: new Types.ObjectId(dto.comicId),
     });
   }
+
+  //Find
+  async findLatest() {
+    return this.chapterModel
+      .aggregate([
+        {
+          $lookup: {
+            from: 'comics',
+            localField: 'comicId',
+            foreignField: '_id',
+            as: 'comic',
+          },
+        },
+        {
+          $unwind: '$comic',
+        },
+        {
+          $project: {
+            pages: 0,
+            comic: {
+              _id: 0,
+              comicBg: 0,
+              description: 0,
+              type: 0,
+              genres: 0,
+              status: 0,
+              translateStatus: 0,
+              author: 0,
+              artist: 0,
+              publishingCompany: 0,
+              createdAt: 0,
+              updatedAt: 0,
+              __v: 0,
+            },
+          },
+        },
+        {
+          $sort: {
+            createdAt: -1,
+          },
+        },
+        { $limit: 10 },
+      ])
+      .exec();
+  }
+  async findByComicId(comicId: string) {
+    const chapters = await this.chapterModel.find({
+      comicId: new Types.ObjectId(comicId),
+    });
+    if (chapters.length == 0) {
+      throw new NotFoundException(CHAPTER_NOT_FOUND_ERROR);
+    }
+    return chapters;
+  }
+  async getReaderHeaderInfo(comicId: string) {
+    const chapters = await this.findByComicId(comicId);
+    const comic = await this.comicModel.findOne({ _id: comicId });
+    return {
+      chaptersQuantity: chapters.length,
+      comicName: comic.title,
+    };
+  }
+  async getChapterPage(comicId: string, chapterNumber: number) {
+    const chapter: chapterType = await this.chapterModel.findOne({
+      comicId: new Types.ObjectId(comicId),
+      chapterNumber,
+    });
+    if (!chapter) {
+      throw new NotFoundException(CHAPTER_NOT_FOUND_ERROR);
+    }
+    let previosChapter: chapterType;
+    if (chapterNumber !== 1) {
+      previosChapter = await this.chapterModel.findOne({
+        comicId: new Types.ObjectId(comicId),
+        chapterNumber: chapterNumber - 1,
+      });
+    }
+    const url = chapter.pages[0];
+    const index = url.lastIndexOf('/');
+    const baseUrl = url.slice(0, index + 1);
+    return {
+      baseUrl,
+      pagesQuantity: chapter.pages.length,
+      prevChapterPageQuantity: previosChapter
+        ? previosChapter.pages.length
+        : null,
+    };
+  }
+  // Modify
   async update(id: string, dto: UpdateChapterDto) {
     const chapter = await this.chapterModel.findByIdAndUpdate(
       { _id: id },
@@ -51,34 +148,5 @@ export class ChapterService {
     return this.chapterModel
       .deleteMany({ comicId: new Types.ObjectId(comicId) })
       .exec();
-  }
-  async findById(id: string) {
-    return this.chapterModel
-      .aggregate([
-        {
-          $match: {
-            _id: new Types.ObjectId(id),
-          },
-        },
-        {
-          $lookup: {
-            from: 'comics',
-            localField: 'comicId',
-            foreignField: '_id',
-            as: 'comicName',
-          },
-        },
-        {
-          $addFields: {
-            comicName: '$comicName.title',
-          },
-        },
-      ])
-      .exec();
-  }
-  async findByComicId(comicId: string) {
-    return this.chapterModel.find({
-      comicId: new Types.ObjectId(comicId),
-    });
   }
 }

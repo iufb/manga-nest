@@ -39,6 +39,7 @@ export class FilesService {
   }
   async saveZip(file: Express.Multer.File, name: string) {
     const zipPath = `${path}/uploads/comics/${name}/chapters`;
+    await remove(zipPath);
     await ensureDir(zipPath);
     await writeFile(`${zipPath}/${file.originalname}`, file.buffer);
     return { file: `${zipPath}/${file.originalname}`, folderPath: zipPath };
