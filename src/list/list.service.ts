@@ -3,10 +3,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ListModel, UserListModel } from './list.model';
 import { AddComicToListDto } from './dto/addComicToList.dto';
-import { listType } from 'types';
-import { LIST_NOT_FOUND_ERROR } from './list.constants';
+import { lastChapterType, listType } from 'types';
+import {
+  LASTCHAPTER_NOT_FOUND_ERROR,
+  LIST_NOT_FOUND_ERROR,
+} from './list.constants';
 import { CreateListDto } from './dto/createList.dto';
-import { NotFoundError } from 'rxjs';
 import { COMIC_NOT_FOUND_ERROR } from 'src/comic/comic.constants';
 
 @Injectable()
@@ -34,12 +36,19 @@ export class ListService {
       (l: UserListModel) => l.userId == new Types.ObjectId(userId),
     );
   }
-  async changeListType(comicId: string, listType: listType, userIndex: number) {
+  async changeListType(
+    comicId: string,
+    listType: listType,
+    userIndex: number,
+    lastChapter?: lastChapterType,
+  ) {
     await this.listModel.updateOne(
       { comic: new Types.ObjectId(comicId) },
       {
         $set: {
           [`users.${userIndex}.listType`]: listType,
+          [`users.${userIndex}.lastChapter.chapter`]: lastChapter.chapter,
+          [`users.${userIndex}.lastChapter.page`]: lastChapter.page,
         },
       },
     );
@@ -48,7 +57,7 @@ export class ListService {
   async addUserToComicList(
     comicId: string,
     userId: string,
-    lastChapter: number,
+    lastChapter: lastChapterType,
     listType: listType,
   ) {
     await this.listModel.updateOne(
@@ -61,9 +70,9 @@ export class ListService {
     );
   }
   async addComicToList(dto: AddComicToListDto) {
-    const list = await this.findByComic(dto.comic);
+    let list = await this.findByComic(dto.comic);
     if (!list) {
-      throw new NotFoundException(LIST_NOT_FOUND_ERROR);
+      list = await this.create(dto);
     }
     const userIndex = await this.findUserIndexInList(list, dto.user);
     if (userIndex == -1) {
@@ -74,7 +83,12 @@ export class ListService {
         dto.listType,
       );
     }
-    return this.changeListType(dto.comic, dto.listType, userIndex);
+    return this.changeListType(
+      dto.comic,
+      dto.listType,
+      userIndex,
+      dto.lastChapter,
+    );
   }
   async getListType(comicId: string, userId: string) {
     const list = await this.findByComic(comicId);
@@ -83,7 +97,7 @@ export class ListService {
     }
     const res = list.users.find((l) => l.userId == new Types.ObjectId(userId));
     if (!res) {
-      return 'add to list';
+      return { listType: 'add to list', lastChapter: { chapter: 1, page: 1 } };
     }
     return { listType: res.listType, lastChapter: res.lastChapter };
   }
@@ -92,23 +106,41 @@ export class ListService {
     const user = list.users.find(
       (user) => user.userId == new Types.ObjectId(userId),
     );
+    if (!user.lastChapter) {
+      throw new NotFoundException(LASTCHAPTER_NOT_FOUND_ERROR);
+    }
     return user.lastChapter;
   }
-  async updateLastReaderChapter(
+  async updateLastReadedChapter(
     userId: string,
     comicId: string,
     lastChapter: number,
+    page: number,
   ) {
     const list = await this.findByComic(comicId);
+    if (!list) {
+      await this.addComicToList({
+        comic: comicId,
+        user: userId,
+        lastChapter: { chapter: lastChapter, page },
+        listType: 'reading',
+      });
+    }
     const userIndex = await this.findUserIndexInList(list, userId);
     if (userIndex == -1) {
-      await this.addUserToComicList(comicId, userId, lastChapter, 'reading');
+      await this.addUserToComicList(
+        comicId,
+        userId,
+        { chapter: lastChapter, page },
+        'reading',
+      );
     } else {
       await this.listModel.updateOne(
         { comic: new Types.ObjectId(comicId) },
         {
           $set: {
-            [`users.${userIndex}.lastChapter`]: lastChapter,
+            [`users.${userIndex}.lastChapter.chapter`]: lastChapter,
+            [`users.${userIndex}.lastChapter.page`]: page,
           },
         },
       );

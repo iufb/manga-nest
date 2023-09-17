@@ -10,18 +10,21 @@ export class RatingService {
   constructor(@InjectModel('rating') private ratingModel: Model<RatingModel>) {}
 
   async create(dto: CreateRatingDto) {
-    return this.ratingModel.create(dto);
+    return this.ratingModel.create({
+      ...dto,
+      comicId: new Types.ObjectId(dto.comicId),
+    });
   }
   async findAddedRate(comicId: string, userId: string) {
     return this.ratingModel.findOne({
       userId,
-      comicId,
+      comicId: new Types.ObjectId(comicId),
     });
   }
   async changeRate({ userId, comicId, rate }: CreateRatingDto) {
     return this.ratingModel.updateOne(
       {
-        comicId,
+        comicId: new Types.ObjectId(comicId),
         userId,
       },
       {
@@ -44,7 +47,7 @@ export class RatingService {
       .aggregate([
         {
           $match: {
-            comicId,
+            comicId: new Types.ObjectId(comicId),
           },
         },
         {
@@ -64,7 +67,7 @@ export class RatingService {
       .aggregate([
         {
           $match: {
-            comicId,
+            comicId: new Types.ObjectId(comicId),
           },
         },
         { $count: 'rateNumber' },

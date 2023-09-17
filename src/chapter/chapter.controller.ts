@@ -41,6 +41,14 @@ export class ChapterController {
     return this.chapterService.getReaderHeaderInfo(comicId);
   }
 
+  @Get('popular')
+  async getLatestPopularUploads() {
+    const latestPopular = await this.chapterService.findLatestPopular();
+    if (latestPopular.length == 0) {
+      throw new NotFoundException(CHAPTER_NOT_FOUND_ERROR);
+    }
+    return latestPopular;
+  }
   @Get('latest')
   async getLatestUploadChapters() {
     const latestChapters = await this.chapterService.findLatest();

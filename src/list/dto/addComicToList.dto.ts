@@ -1,5 +1,6 @@
 import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 import { listArray } from '../list.constants';
+import { lastChapterType } from 'types';
 
 export class AddComicToListDto {
   @IsString()
@@ -13,6 +14,5 @@ export class AddComicToListDto {
   listType: 'reading' | 'planned' | 'dropped' | 'finished';
 
   @IsOptional()
-  @IsNumber()
-  lastChapter?: number;
+  lastChapter?: lastChapterType;
 }

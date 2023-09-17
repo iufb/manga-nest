@@ -11,6 +11,7 @@ import { FilesModule } from './files/files.module';
 import { UserModule } from './user/user.module';
 import { ListModule } from './list/list.module';
 import { RatingModule } from './rating/rating.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { RatingModule } from './rating/rating.module';
     UserModule,
     ListModule,
     RatingModule,
+    CommentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

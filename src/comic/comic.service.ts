@@ -5,8 +5,41 @@ import { ComicDocument, ComicModel } from './comic.model';
 import { ComicDto } from './dto/Comic.dto';
 import { COMIC_ALREADY_EXISTS_ERROR } from './comic.constants';
 import { UpdateComicDto } from './dto/updateComic.dto';
-import { filterComic } from 'types';
+import { filterComic, sortDirectionType } from 'types';
+const fullComicData = [
+  {
+    $lookup: {
+      from: 'chapters',
+      localField: '_id',
+      foreignField: 'comicId',
+      as: 'chapters',
+    },
+  },
+  {
+    $lookup: {
+      from: 'ratings',
+      localField: '_id',
+      foreignField: 'comicId',
+      as: 'ratings',
+    },
+  },
 
+  {
+    $addFields: {
+      chaptersCount: { $size: '$chapters' },
+      rateCount: { $size: '$ratings' },
+      rate: {
+        $ifNull: [{ $avg: '$ratings.rate' }, 0],
+      },
+    },
+  },
+  {
+    $project: {
+      chapters: 0,
+      ratings: 0,
+    },
+  },
+];
 const aggregationProps = (
   findBy: string,
   value: string,
@@ -62,8 +95,13 @@ export class ComicService {
       $text: { $search: text, $caseSensitive: false },
     });
   }
-  async getAll() {
-    return this.comicModel.find({});
+  async getAll(sortType?: string, sortDirection?: sortDirectionType) {
+    const sort = sortType ? sortType : 'rate';
+    const direction = sortDirection ? sortDirection : 'desc';
+    return this.comicModel.aggregate([
+      ...fullComicData,
+      { $sort: { [sort]: direction == 'asc' ? 1 : -1 } },
+    ]);
   }
   async getFiltered(data: filterComic) {
     const query: Record<string, unknown> = {};
@@ -80,8 +118,17 @@ export class ComicService {
     if (data.translateStatus && data.translateStatus.length > 1) {
       query.translateStatus = { $in: data.translateStatus };
     }
-
-    return this.comicModel.find(query);
+    const { sortType, sortDirection } = data;
+    console.log(sortType, sortDirection);
+    return this.comicModel.aggregate([
+      { $match: { ...query } },
+      ...fullComicData,
+      {
+        $sort: {
+          [sortType]: sortDirection == 'asc' ? 1 : -1,
+        },
+      },
+    ]);
   }
   async update(id: string, comicData: UpdateComicDto) {
     const comic = await this.comicModel.findOneAndUpdate(

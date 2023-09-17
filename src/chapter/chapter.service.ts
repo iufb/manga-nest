@@ -13,7 +13,39 @@ import { path } from 'app-root-path';
 import { rename } from 'fs-extra';
 import { CHAPTER_NOT_FOUND_ERROR } from './chapter.constants';
 import { ComicModel } from 'src/comic/comic.model';
-import { chapterType } from 'types';
+import { chapterType, updateLatestChapters } from 'types';
+const latestAggregationProps = [
+  {
+    $lookup: {
+      from: 'comics',
+      localField: 'comicId',
+      foreignField: '_id',
+      as: 'comic',
+    },
+  },
+  {
+    $unwind: '$comic',
+  },
+  {
+    $project: {
+      pages: 0,
+      comic: {
+        _id: 0,
+        description: 0,
+        type: 0,
+        genres: 0,
+        status: 0,
+        translateStatus: 0,
+        author: 0,
+        artist: 0,
+        publishingCompany: 0,
+        createdAt: 0,
+        updatedAt: 0,
+        __v: 0,
+      },
+    },
+  },
+];
 @Injectable()
 export class ChapterService {
   constructor(
@@ -47,47 +79,64 @@ export class ChapterService {
 
   //Find
   async findLatest() {
-    return this.chapterModel
-      .aggregate([
-        {
-          $lookup: {
-            from: 'comics',
-            localField: 'comicId',
-            foreignField: '_id',
-            as: 'comic',
-          },
-        },
-        {
-          $unwind: '$comic',
-        },
-        {
-          $project: {
-            pages: 0,
-            comic: {
-              _id: 0,
-              comicBg: 0,
-              description: 0,
-              type: 0,
-              genres: 0,
-              status: 0,
-              translateStatus: 0,
-              author: 0,
-              artist: 0,
-              publishingCompany: 0,
-              createdAt: 0,
-              updatedAt: 0,
-              __v: 0,
+    const chapters: updateLatestChapters[] = await this.chapterModel.aggregate([
+      ...latestAggregationProps,
+      {
+        $addFields: {
+          chapterNumbers: [
+            {
+              chapter: `$chapterNumber`,
+              name: '$name',
             },
+          ],
+        },
+      },
+      {
+        $project: {
+          chapterNumber: 0,
+          name: 0,
+        },
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      { $limit: 10 },
+    ]);
+    return chapters;
+  }
+  async findLatestPopular() {
+    return this.chapterModel.aggregate([
+      ...latestAggregationProps,
+      {
+        $lookup: {
+          from: 'ratings',
+          localField: 'comicId',
+          foreignField: 'comicId',
+          as: 'rating',
+        },
+      },
+      {
+        $addFields: {
+          avgRating: {
+            $ifNull: [{ $avg: '$rating.rate' }, 0],
           },
         },
-        {
-          $sort: {
-            createdAt: -1,
-          },
+      },
+
+      {
+        $project: {
+          rating: 0,
         },
-        { $limit: 10 },
-      ])
-      .exec();
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      { $limit: 7 },
+    ]);
   }
   async findByComicId(comicId: string) {
     const chapters = await this.chapterModel.find({
@@ -125,6 +174,7 @@ export class ChapterService {
     const index = url.lastIndexOf('/');
     const baseUrl = url.slice(0, index + 1);
     return {
+      chapterId: chapter._id,
       baseUrl,
       pagesQuantity: chapter.pages.length,
       prevChapterPageQuantity: previosChapter

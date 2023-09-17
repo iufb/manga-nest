@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -15,6 +16,7 @@ import { AddComicToListDto } from './dto/addComicToList.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { CreateListDto } from './dto/createList.dto';
 import { listType } from 'types';
+import { LASTCHAPTER_NOT_FOUND_ERROR } from './list.constants';
 
 @Controller('list')
 export class ListController {
@@ -55,19 +57,28 @@ export class ListController {
     @Param('userId') userId: string,
     @Param('comicId') comicId: string,
   ) {
-    return this.listService.getLastReadedChapter(userId, comicId);
+    const lastChapter = await this.listService.getLastReadedChapter(
+      userId,
+      comicId,
+    );
+    if (!lastChapter) {
+      throw new NotFoundException(LASTCHAPTER_NOT_FOUND_ERROR);
+    }
+    return lastChapter;
   }
   @Patch('/lastChapter/:userId/:comicId/')
   @UseGuards(JwtAuthGuard)
   async updateLastChapter(
     @Param('userId') userId: string,
     @Param('comicId') comicId: string,
-    @Body() lastChapter: { chapterNumber: number },
+    @Body() lastChapter: { chapterNumber: number; page: number },
   ) {
-    return this.listService.updateLastReaderChapter(
+    console.log(lastChapter.page);
+    return this.listService.updateLastReadedChapter(
       userId,
       comicId,
       lastChapter.chapterNumber,
+      lastChapter.page,
     );
   }
 }

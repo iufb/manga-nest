@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -19,7 +20,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt.guard';
 import { UpdateComicDto } from './dto/updateComic.dto';
 import { IdValidationPipe } from 'src/pipes/id-validation.pipe';
 import { TypeValidationPipe } from 'src/pipes/type-validation.pipe';
-import { filterComic } from 'types';
+import { filterComic, sortDirectionType } from 'types';
 
 @Controller('comic')
 export class ComicController {
@@ -40,15 +41,23 @@ export class ComicController {
     return comics;
   }
   @Get()
-  @UseGuards(JwtAuthGuard)
-  async getAll() {
-    const comics = await this.comicService.getAll();
+  async getAll(
+    @Query()
+    {
+      sortType,
+      sortDirection,
+    }: {
+      sortType?: string;
+      sortDirection?: sortDirectionType;
+    },
+  ) {
+    const comics = await this.comicService.getAll(sortType, sortDirection);
     if (!comics) {
       throw new NotFoundException(COMIC_NOT_FOUND_ERROR);
     }
     return comics;
   }
-  @UseGuards(JwtAuthGuard)
+
   @Get(':id')
   async get(@Param('id', IdValidationPipe) id: string) {
     const comic = await this.comicService.findById(id);
@@ -59,7 +68,6 @@ export class ComicController {
   }
 
   @Get('/type/:type')
-  @UseGuards(JwtAuthGuard)
   async getByType(@Param('type', TypeValidationPipe) type: string) {
     const comics = await this.comicService.findByType(type);
     if (!comics) {
