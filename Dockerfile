@@ -1,8 +1,8 @@
 FROM node:20-alpine
 WORKDIR /opt/app
 ADD package.json package.json
-RUN npm install
+ADD yarn.lock yarn.lock
+RUN yarn 
 ADD . .
-RUN npm run build
-RUN npm prune --omit=dev
-CMD ["node", "./dist/main.js"]
+RUN yarn build
+CMD ["node", "dist/src/main.js"]
