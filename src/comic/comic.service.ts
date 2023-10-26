@@ -105,7 +105,6 @@ export class ComicService {
   }
   async getFiltered(data: filterComic) {
     const query: Record<string, unknown> = {};
-    console.log(data);
     if (data.genres.length > 0) {
       query.genres = { $in: data.genres };
     }
@@ -119,7 +118,6 @@ export class ComicService {
       query.translateStatus = { $in: data.translateStatus };
     }
     const { sortType, sortDirection } = data;
-    console.log(sortType, sortDirection);
     return this.comicModel.aggregate([
       { $match: { ...query } },
       ...fullComicData,

@@ -73,7 +73,6 @@ export class ListController {
     @Param('comicId') comicId: string,
     @Body() lastChapter: { chapterNumber: number; page: number },
   ) {
-    console.log(lastChapter.page);
     return this.listService.updateLastReadedChapter(
       userId,
       comicId,

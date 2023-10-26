@@ -30,7 +30,6 @@ export class RatingController {
     if (!comicRate) {
       throw new NotFoundException(RATE_NOT_FOUND_ERROR);
     }
-    console.log(comicRate);
     return comicRate;
   }
   @Get(':userId/:comicId')
@@ -40,7 +39,6 @@ export class RatingController {
     @Param('comicId') comicId: string,
   ) {
     const rate = await this.ratingService.findAddedRate(comicId, userId);
-    console.log(rate);
     if (!rate) {
       return new NotFoundException(RATE_NOT_FOUND_ERROR);
     }
