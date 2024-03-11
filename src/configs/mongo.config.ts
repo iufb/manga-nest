@@ -5,7 +5,7 @@ export const getMongoConfig = async (
   configService: ConfigService,
 ): Promise<MongooseModuleOptions> => {
   return {
-    uri: getMongoString(configService),
+    uri: process.env.DATABASE_URL,
     ...getMongoOptions(),
   };
 };

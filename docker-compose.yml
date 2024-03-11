@@ -1,11 +1,11 @@
 version: '3'
 services:
-  manga.nest:
-    image: ghcr.io/iufb/manga-nest/manga-nest:develop
+  manga-nest:
+    image: manga-nest:latest
     container_name: manga-nest
     restart: always
     ports:
-      - 3000:3000
+      - '3000:3000'
     volumes:
-      - ./.env:/opt/app/.env
-      - ./uploads:/opt/app/uploads
+      - './.env:/opt/app/.env'
+      - './uploads:/opt/app/uploads'
